@@ -1,0 +1,79 @@
+find_program
+===
+
+find_program 查找可执行程序
+
+   find_program(<VAR> name1 [path1 path2 ...])
+　　这是该命令的精简格式，它在大多数场合下都够用了。命令find_program(<VAR> name1 [PATHS path1 path2 ...])是它的等价形式。
+
+   find_program(
+             <VAR>
+             name | NAMES name1 [name2 ...]
+             [HINTS path1 [path2 ... ENV var]]
+             [PATHS path1 [path2 ... ENV var]]
+             [PATH_SUFFIXES suffix1 [suffix2 ...]]
+             [DOC "cache documentation string"]
+             [NO_DEFAULT_PATH]
+             [NO_CMAKE_ENVIRONMENT_PATH]
+             [NO_CMAKE_PATH]
+             [NO_SYSTEM_ENVIRONMENT_PATH]
+             [NO_CMAKE_SYSTEM_PATH]
+             [CMAKE_FIND_ROOT_PATH_BOTH |
+              ONLY_CMAKE_FIND_ROOT_PATH |
+              NO_CMAKE_FIND_ROOT_PATH]
+            )
+　　该命令用于查找程序。一个名为<VAR>的cache条目会被创建用来存储该命令的结果。如果该程序被找到了，结果会存储在该变量中，搜索过程将不会再重复，除非该变量被清除。如果没有找到，结果将会是<VAR>-NOTFOUND，并且下次以相同的变量调用该命令时，还会做搜索的尝试。被搜索的程序的名字由NAMES选项后列出的参数指定。附加的搜索位置可以在PATHS参数后指定。如果在HINTS或者PATHS选项后有ENV var参数，环境变量var将会被读取并从系统环境变量转换为cmake风格的路径list。比如ENV PATH是一种列出所有系统path变量的方法。DOC后的参数将会被用作cache中的注释字符串。PATH_SUFFIXES指定了在每个搜索路径下要检查的附加子路径。
+
+　　如果指定了NO_DEFAULT_PATH选项，那么搜索的过程中不会有其他的附加路径。如果没有指定该选项，搜索过程如下：
+
+　　1、搜索cmake特有的cache变量指定的路径。这些变量是在用cmake命令行时，通过-DVAR=value指定的变量。如果指定了NO_CMAKE_PATH选项，这些路径会被跳过。搜索的路径还包括：
+
+   对于每个在CMAKE_PREFIX_PATH中的<prefix>，路径<prefix>/[s]bin 
+   CMAKE_PROGRAM_PATH
+   CMAKE_APPBUNDLE_PATH
+　　2、搜索cmake特有的环境变量指定的路径。这些变量是用户的shell配置中设置的变量。如果指定了NO_CMAKE_ENVIRONMENT_PATH选项，这些路径会被跳过。搜索的路径还包括：
+
+   对于每个在CMAKE_PREFIX_PATH中的<prefix>，路径<prefix>/[s]bin 
+   CMAKE_PROGRAM_PATH
+   CMAKE_APPBUNDLE_PATH
+　　3、搜索由HINTS选项指定的路径。这些路径是系统内省（introspection）估算出的路径，比如由另一个已经发现的程序的地址提供的参考信息。硬编码的推荐路径应该通过PATHS选项指定。
+
+　　4、查找标准的系统环境变量。如果指定了NO_SYSTEM_ENVIRONMENT_PATH选项，这些路径会被跳过。搜索的路径还包括：
+
+   PATH
+　　5、查找在为当前系统的平台文件中定义的cmake变量。如果指定了NO_CMAKE_SYSTEM_PATH选项，该路径会被跳过。搜索的路径还包括：
+
+   对于每个在CMAKE_SYSTEM_PREFIX_PATH中的<prefix>，路径<prefix>/[s]bin 
+   CMAKE_SYSTEM_PROGRAM_PATH
+   CMAKE_SYSTEM_APPBUNDLE_PATH
+　　6、搜索PATHS选项或者精简版命令指定的路径。这些通常是硬编码的推荐搜索路径。
+
+　　在Darwin或者支持OS X 框架的系统上，cmake变量CMAKE_FIND_FRAMEWORK可以设置为空，或者下述值之一：
+
+   "FIRST"  - 在标准库或头文件之前查找框架。在Darwin系统上这是默认选项。
+   "LAST"   - 在标准库或头文件之后查找框架。
+   "ONLY"   - 仅仅查找框架。
+   "NEVER" - 从不查找框架。
+　　在Darwin或者支持OS X Application Bundles的系统，cmake变量CMAKE_FIND_APPBUNDLE可以被设置为空或者下面这些值中的一个：
+
+   "FIRST"  - 在标准程序之前查找application bundles。在Darwin系统上这是默认选项。
+   "LAST"   - 在标准程序之后查找application bundles。
+   "ONLY"   - 仅仅查找application bundles。
+   "NEVER" - 从不查找application bundles。
+　　CMake变量CMAKE_FIND_ROOT_PATH指定了一个或者多个优先于其他搜索路径的搜索路径。该变量能够有效地重新定位在给定位置下进行搜索的根路径。该变量默认为空。当使用交叉编译时，该变量十分有用：用该变量指向目标环境的根目录，然后CMake将会在那里查找。默认情况下，在CMAKE_FIND_ROOT_PATH中列出的路径会首先被搜索，然后是“非根”路径。该默认规则可以通过设置CMAKE_FIND_ROOT_PATH_MODE_LIBRARY做出调整。在每次调用该命令之前，都可以通过设置这个变量来手动覆盖默认行为。如果使用了NO_CMAKE_FIND_ROOT_PATH变量，那么只有重定位的路径会被搜索。
+
+　　默认的搜索顺序的设计逻辑是按照使用时从最具体到最不具体。通过多次以NO_*选项调用find_program命令，可以覆盖工程的这个默认顺序：
+
+    find_library(<VAR> NAMES name PATHS paths... NO_DEFAULT_PATH)
+   find_library(<VAR> NAMES name)
+　　只要这些调用中的一个成功返回，结果变量就会被设置并且被存储到cache中；这样随后的调用都不会再行搜索。 
+
+ 
+
+CMD#34:fltk_wrap_ui 创建FLTK用户界面包装器。
+
+  fltk_wrap_ui(resultingLibraryName source1
+               source2 ... sourceN )
+　　为所有列出的.fl和.fld文件生成.h和.cxx文件。这些生成的.h和.cxx文件将会加到变量resultingLibraryName_FLTK_UI_SRCS中，它也会加到你的库中。
+
+
